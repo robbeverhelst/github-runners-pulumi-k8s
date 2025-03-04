@@ -1,0 +1,14 @@
+name: github-actions-runners
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+    typescript: true
+main: index.ts
+description: Pulumi project for deploying GitHub Actions self-hosted runners on Kubernetes
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: typescript
+      application: github-actions-runners
+      environment: kubernetes

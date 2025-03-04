@@ -1,0 +1,23 @@
+config:
+  # These are placeholder values and should be set securely using `pulumi config set`
+  github-actions-runners:kubeconfig:
+    secure: ""
+  github-actions-runners:githubToken:
+    secure: ""
+  
+  # Runner configuration
+  github-actions-runners:namespace: "debleserit-runners"
+  github-actions-runners:githubOrg: "DeBleserIT"
+  github-actions-runners:runnerLabels:
+    - "self-hosted"
+    - "kubernetes"
+    - "debleserit"
+  github-actions-runners:minRunners: 1
+  github-actions-runners:maxRunners: 3
+  github-actions-runners:tokenSecretName: "debleserit-github-token"
+  
+  # Additional configuration specific to DeBleserIT can be added here
+  pulumi:tags:
+    value:
+      environment: production
+      project: debleserit 

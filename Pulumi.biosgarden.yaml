@@ -1,0 +1,23 @@
+config:
+  # These are placeholder values and should be set securely using `pulumi config set`
+  github-actions-runners:kubeconfig:
+    secure: ""
+  github-actions-runners:githubToken:
+    secure: ""
+  
+  # Runner configuration
+  github-actions-runners:namespace: "biosgarden-runners"
+  github-actions-runners:githubOrg: "BiosGarden"
+  github-actions-runners:runnerLabels:
+    - "self-hosted"
+    - "kubernetes"
+    - "biosgarden"
+  github-actions-runners:minRunners: 1
+  github-actions-runners:maxRunners: 3
+  github-actions-runners:tokenSecretName: "biosgarden-github-token"
+  
+  # Additional configuration specific to BiosGarden can be added here
+  pulumi:tags:
+    value:
+      environment: production
+      project: biosgarden 

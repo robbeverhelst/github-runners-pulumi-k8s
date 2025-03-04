@@ -1,0 +1,34 @@
+{
+    "name": "github-actions-runners",
+    "version": "1.0.0",
+    "description": "Pulumi project for deploying GitHub Actions self-hosted runners on Kubernetes",
+    "main": "index.ts",
+    "scripts": {
+        "build": "tsc",
+        "deploy": "pulumi up",
+        "destroy": "pulumi destroy",
+        "preview": "pulumi preview",
+        "lint": "tsc --noEmit"
+    },
+    "keywords": [
+        "github-actions",
+        "kubernetes",
+        "pulumi",
+        "self-hosted-runners",
+        "actions-runner-controller"
+    ],
+    "author": "Robbe Verhelst",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/github": "^6.7.0",
+        "@pulumi/kubernetes": "^4.21.1",
+        "@pulumi/pulumi": "^3.113.0"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}
