@@ -66,11 +66,20 @@ All resources are prefixed with the stack name to ensure uniqueness when deployi
 
 4. Configure the required secrets for the selected stack:
    ```bash
-   pulumi config set --secret kubeconfig "$(cat ~/.kube/config)"
+   # Configure GitHub token
    pulumi config set --secret githubToken "your-github-token"
    ```
 
-5. Deploy the stack:
+5. Ensure your Kubernetes configuration is set up:
+   ```bash
+   # Make sure your KUBECONFIG environment variable is set correctly
+   export KUBECONFIG=~/path/to/your/kubeconfig
+   
+   # Verify connectivity to your cluster
+   kubectl get nodes
+   ```
+
+6. Deploy the stack:
    ```bash
    pulumi up
    ```
@@ -87,7 +96,7 @@ To add runners for a new project:
 2. Configure the new stack with all required settings:
    ```bash
    pulumi stack select newproject
-   pulumi config set --secret kubeconfig "$(cat ~/.kube/config)"
+   
    pulumi config set --secret githubToken "your-github-token"
    pulumi config set namespace "newproject-runners"
    pulumi config set githubOrg "NewProjectOrg"
@@ -138,8 +147,6 @@ Each stack configuration file (`Pulumi.<stack-name>.yaml`) contains the followin
 ```yaml
 config:
   # Secrets (set these using pulumi config set --secret)
-  github-actions-runners:kubeconfig:
-    secure: ""
   github-actions-runners:githubToken:
     secure: ""
   
@@ -156,6 +163,10 @@ config:
   github-actions-runners:tokenSecretName: "project-github-token"  # Should be unique per stack
 ```
 
+> Note: Kubernetes authentication is handled using your local kubeconfig file. 
+> Make sure your KUBECONFIG environment variable is properly set to point to your kubeconfig file
+> before running Pulumi commands.
+
 ## Resource Naming
 
 All resources created by this project are prefixed with the stack name to ensure uniqueness when deploying multiple stacks to the same Kubernetes cluster. For example:
@@ -163,7 +174,7 @@ All resources created by this project are prefixed with the stack name to ensure
 - Namespaces: `<stack>-actions-runner-system`, `<stack>-runners`
 - Helm releases: `<stack>-actions-runner-controller`
 - Secrets: `<stack>-github-token-secret`
-- Runner deployments: `<stack>-<name>-runners`
+- Runner deployments: `<stack>-<n>-runners`
 
 This ensures that multiple stacks can coexist in the same Kubernetes cluster without conflicts.
 
@@ -174,6 +185,16 @@ Common issues and solutions:
 - **Runners not registering**: Check the runner pod logs for authentication issues
 - **Workflows not using self-hosted runners**: Ensure the correct labels are specified in your workflow
 - **Runner pods crashing**: Check resource limits and node capacity
+- **Kubernetes authentication issues**: 
+  - The deployment uses your default Kubernetes configuration
+  - Ensure your KUBECONFIG environment variable is set correctly:
+    ```bash
+    export KUBECONFIG=~/path/to/your/kubeconfig
+    ```
+  - Verify connectivity to your cluster with:
+    ```bash
+    kubectl get nodes
+    ```
 
 ## Maintenance
 
@@ -183,4 +204,4 @@ Common issues and solutions:
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
