@@ -39,6 +39,13 @@ const repositories: RunnerConfig[] = [
         minRunners: 1,
         maxRunners: 3,
     },
+    {
+        pulumiResourceName: "arc-runner-set-psbeheer", // Keep existing name for state compatibility
+        helmReleaseName: "arc-runner-set-psbeheer",    // Keep existing name for state compatibility
+        repository: "RobbeVerhelst/psbeheer",
+        minRunners: 1,
+        maxRunners: 3,
+    },
 ];
 
 // ============================================================================
