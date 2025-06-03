@@ -19,29 +19,29 @@ interface RunnerConfig {
 // Add or modify repositories here
 const repositories: RunnerConfig[] = [
     {
-        pulumiResourceName: "arc-runner-set-debleserit",           // Keep existing name for state compatibility
-        helmReleaseName: "arc-runner-set-debleserit",   // Keep existing name for state compatibility  
+        pulumiResourceName: "arc-runner-set-debleserit",
+        helmReleaseName: "arc-runner-set-debleserit",
         repository: "RobbeVerhelst/DeBleserIT",
         minRunners: 1,
         maxRunners: 3,
     },
     {
-        pulumiResourceName: "arc-runner-set-maps",      // Keep existing name for state compatibility
-        helmReleaseName: "arc-runner-set-maps",         // Keep existing name for state compatibility
+        pulumiResourceName: "arc-runner-set-maps",
+        helmReleaseName: "arc-runner-set-maps",
         repository: "RobbeVerhelst/maps",
         minRunners: 1,
         maxRunners: 3,
     },
     {
-        pulumiResourceName: "arc-runner-set-jurgenlis", // Keep existing name for state compatibility
-        helmReleaseName: "arc-runner-set-jurgenlis",    // Keep existing name for state compatibility
+        pulumiResourceName: "arc-runner-set-jurgenlis",
+        helmReleaseName: "arc-runner-set-jurgenlis",
         repository: "RobbeVerhelst/jurgenlis",
         minRunners: 1,
         maxRunners: 3,
     },
     {
-        pulumiResourceName: "arc-runner-set-psbeheer", // Keep existing name for state compatibility
-        helmReleaseName: "arc-runner-set-psbeheer",    // Keep existing name for state compatibility
+        pulumiResourceName: "arc-runner-set-psbeheer",
+        helmReleaseName: "arc-runner-set-psbeheer",
         repository: "RobbeVerhelst/psbeheer",
         minRunners: 1,
         maxRunners: 3,
