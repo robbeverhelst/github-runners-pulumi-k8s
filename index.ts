@@ -46,6 +46,20 @@ const repositories: RunnerConfig[] = [
         minRunners: 1,
         maxRunners: 3,
     },
+    {
+        pulumiResourceName: "arc-runner-set-website",
+        helmReleaseName: "arc-runner-set-website",
+        repository: "RobbeVerhelst/website",
+        minRunners: 1,
+        maxRunners: 3,
+    },
+    {
+        pulumiResourceName: "arc-runner-set-observation-dashboard",
+        helmReleaseName: "arc-runner-set-observation-dashboard",
+        repository: "RobbeVerhelst/observation-dashboard",
+        minRunners: 1,
+        maxRunners: 3,
+    }, 
 ];
 
 // ============================================================================
