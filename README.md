@@ -1,10 +1,18 @@
 # GitHub Actions Self-Hosted Runners
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Pulumi](https://img.shields.io/badge/Pulumi-8A3391?logo=pulumi&logoColor=white)](https://www.pulumi.com/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/robbeverhec)
+
 This repository manages self-hosted GitHub Actions runners for various projects using [Pulumi](https://www.pulumi.com/) to deploy [Actions Runner Controller (ARC)](https://github.com/actions/actions-runner-controller) on a Kubernetes cluster.
 
 ## Overview
 
 Self-hosted runners provide several advantages over GitHub-hosted runners:
+
 - Custom hardware configurations
 - Longer running workflows
 - Access to internal resources
@@ -12,6 +20,7 @@ Self-hosted runners provide several advantages over GitHub-hosted runners:
 - Cost optimization for high-volume CI/CD
 
 This repository uses:
+
 - **Pulumi**: Infrastructure as Code tool to manage deployments
 - **Kubernetes**: Container orchestration platform
 - **Helm**: Package manager for Kubernetes
@@ -19,24 +28,19 @@ This repository uses:
 
 ## Architecture
 
-The repository is structured to use Pulumi's native stack system for managing different configurations:
+The repository is structured to deploy multiple runner scale sets for different repositories from a single configuration:
 
 ```
 .
-├── index.ts                # Main program file with runner deployment logic
-├── Pulumi.yaml             # Pulumi project configuration
-├── Pulumi.debleserit.yaml  # Stack configuration for DeBleserIT
-├── Pulumi.do.yaml          # Stack configuration for DigitalOcean
-└── Pulumi.biosgarden.yaml  # Stack configuration for BiosGarden
+├── index.ts                    # Main program file with runner deployment logic
+├── runners.config.json         # Runner configuration (not in git - contains private repo info)
+├── runners.config.example.json # Example configuration file
+├── Pulumi.yaml                 # Pulumi project configuration
+├── Pulumi.production.yaml      # Stack configuration for production
+└── setup-stack-config.sh      # Helper script for stack configuration
 ```
 
-Each stack configuration file contains all the settings needed for that specific project, including:
-- Runner namespace
-- GitHub organization or repository
-- Runner labels
-- Autoscaling configuration
-
-All resources are prefixed with the stack name to ensure uniqueness when deploying multiple stacks to the same Kubernetes cluster.
+The runner configuration is kept in a separate `runners.config.json` file that is not tracked in git, allowing the repository to be made public without exposing private repository information.
 
 ## Prerequisites
 
@@ -49,157 +53,169 @@ All resources are prefixed with the stack name to ensure uniqueness when deployi
 ## Setup
 
 1. Clone this repository:
-   ```bash
-   git clone https://github.com/RobbeVerhelst/github-actions-runners.git
-   cd github-actions-runners
-   ```
+
+    ```bash
+    git clone https://github.com/RobbeVerhelst/github-runners-pulumi-k8s.git
+    cd github-runners-pulumi-k8s
+    ```
 
 2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
 
-3. Select a stack to work with:
-   ```bash
-   pulumi stack select debleserit
-   ```
+    ```bash
+    pnpm install
+    ```
 
-4. Configure the required secrets for the selected stack:
-   ```bash
-   # Configure GitHub token
-   pulumi config set --secret githubToken "your-github-token"
-   ```
+3. Create your runner configuration:
 
-5. Ensure your Kubernetes configuration is set up:
-   ```bash
-   # Make sure your KUBECONFIG environment variable is set correctly
-   export KUBECONFIG=~/path/to/your/kubeconfig
-   
-   # Verify connectivity to your cluster
-   kubectl get nodes
-   ```
+    ```bash
+    # Copy the example configuration
+    cp runners.config.example.json runners.config.json
 
-6. Deploy the stack:
-   ```bash
-   pulumi up
-   ```
+    # Edit the configuration with your repositories
+    # The file should contain an array of runner configurations
+    ```
 
-## Adding a New Project
+4. Configure the Pulumi stack:
 
-To add runners for a new project:
+    ```bash
+    # Select the production stack (or create a new one)
+    pulumi stack select production
 
-1. Create a new stack:
-   ```bash
-   pulumi stack init newproject
-   ```
+    # Configure required settings
+    pulumi config set --secret github:token "your-github-token"
 
-2. Configure the new stack with all required settings:
-   ```bash
-   pulumi stack select newproject
-   
-   pulumi config set --secret githubToken "your-github-token"
-   pulumi config set namespace "newproject-runners"
-   pulumi config set githubOrg "NewProjectOrg"
-   pulumi config set runnerLabels '["self-hosted", "kubernetes", "newproject"]'
-   pulumi config set minRunners 1
-   pulumi config set maxRunners 3
-   pulumi config set tokenSecretName "newproject-github-token"
-   ```
+    # Optional: Set custom kubeconfig path (defaults to ~/.kube/config)
+    # pulumi config set kubeconfig "path/to/your/kubeconfig"
+    ```
 
-3. Deploy the new stack:
-   ```bash
-   pulumi up
-   ```
+5. Deploy the infrastructure:
+    ```bash
+    pulumi up
+    ```
+
+## Adding a New Repository
+
+To add runners for a new repository:
+
+1. Edit your `runners.config.json` file:
+
+    ```json
+    [
+        {
+            "helmReleaseName": "arc-runner-set-my-new-repo",
+            "repository": "username/my-new-repository",
+            "minRunners": 1,
+            "maxRunners": 3
+        }
+    ]
+    ```
+
+2. Deploy the updated configuration:
+    ```bash
+    pulumi up
+    ```
+
+## Configuration File Structure
+
+The `runners.config.json` file should contain an array of runner configurations:
+
+```json
+[
+    {
+        "helmReleaseName": "arc-runner-set-example-repo",
+        "repository": "username/repository-name",
+        "minRunners": 1,
+        "maxRunners": 3
+    }
+]
+```
+
+**Configuration Fields:**
+
+- `helmReleaseName`: Name of the Helm release (must be unique across all runners)
+- `repository`: GitHub repository in the format `owner/repo`
+- `minRunners`: Minimum number of runners to keep running (optional, defaults to 1)
+- `maxRunners`: Maximum number of runners to scale up to (optional, defaults to 3)
+
+> **Note**: Pulumi resource names are automatically generated from the repository name (e.g., `username/my-repo` → `arc-runner-set-my-repo`)
 
 ## GitHub Actions Configuration
 
-To use self-hosted runners in your GitHub Actions workflows, specify the appropriate labels:
+To use self-hosted runners in your GitHub Actions workflows, specify the runner set name:
 
 ```yaml
 jobs:
-  build:
-    runs-on: self-hosted # or specific labels like [self-hosted, kubernetes, debleserit]
-    steps:
-      # Your workflow steps
+    build:
+        runs-on: arc-runner-set-example-repo # Use the helmReleaseName from your config
+        steps:
+            # Your workflow steps
 ```
 
-## Managing Stacks
+## Managing the Deployment
 
 List all stacks:
+
 ```bash
 pulumi stack ls
 ```
 
 Switch between stacks:
+
 ```bash
 pulumi stack select <stack-name>
 ```
 
 View stack outputs:
+
 ```bash
 pulumi stack output
 ```
 
-## Stack Configuration Reference
+## Stack Configuration
 
-Each stack configuration file (`Pulumi.<stack-name>.yaml`) contains the following settings:
+The Pulumi stack requires the following configuration:
 
-```yaml
-config:
-  # Secrets (set these using pulumi config set --secret)
-  github-actions-runners:githubToken:
-    secure: ""
-  
-  # Runner configuration
-  github-actions-runners:namespace: "project-runners"
-  github-actions-runners:githubOrg: "OrganizationName"
-  github-actions-runners:githubRepo: "optional-specific-repo"  # Optional
-  github-actions-runners:runnerLabels:
-    - "self-hosted"
-    - "kubernetes"
-    - "project-specific-label"
-  github-actions-runners:minRunners: 1
-  github-actions-runners:maxRunners: 3
-  github-actions-runners:tokenSecretName: "project-github-token"  # Should be unique per stack
+```bash
+# GitHub token (stored as secret) - REQUIRED
+pulumi config set --secret github:token "your-github-token"
+
+# Kubernetes configuration file path - OPTIONAL (defaults to ~/.kube/config)
+pulumi config set kubeconfig "path/to/your/kubeconfig"
 ```
 
-> Note: Kubernetes authentication is handled using your local kubeconfig file. 
-> Make sure your KUBECONFIG environment variable is properly set to point to your kubeconfig file
-> before running Pulumi commands.
+> Note: The GitHub token needs the following permissions:
+>
+> - `repo` scope for private repositories
+> - `public_repo` scope for public repositories
+> - `admin:org` scope if configuring organization-level runners
 
-## Resource Naming
+## Important Files
 
-All resources created by this project are prefixed with the stack name to ensure uniqueness when deploying multiple stacks to the same Kubernetes cluster. For example:
-
-- Namespaces: `<stack>-actions-runner-system`, `<stack>-runners`
-- Helm releases: `<stack>-actions-runner-controller`
-- Secrets: `<stack>-github-token-secret`
-- Runner deployments: `<stack>-<n>-runners`
-
-This ensures that multiple stacks can coexist in the same Kubernetes cluster without conflicts.
+- `runners.config.json` - Contains your private repository configuration (not tracked in git)
+- `runners.config.example.json` - Example configuration file (tracked in git)
+- `index.ts` - Main Pulumi program that deploys the infrastructure
+- `.gitignore` - Ensures `runners.config.json` is not committed to git
 
 ## Troubleshooting
 
 Common issues and solutions:
 
+- **Configuration file not found**: Make sure you've created `runners.config.json` from the example file
 - **Runners not registering**: Check the runner pod logs for authentication issues
-- **Workflows not using self-hosted runners**: Ensure the correct labels are specified in your workflow
+- **Workflows not using self-hosted runners**: Ensure the correct runner set name is specified in your workflow
 - **Runner pods crashing**: Check resource limits and node capacity
-- **Kubernetes authentication issues**: 
-  - The deployment uses your default Kubernetes configuration
-  - Ensure your KUBECONFIG environment variable is set correctly:
-    ```bash
-    export KUBECONFIG=~/path/to/your/kubeconfig
-    ```
-  - Verify connectivity to your cluster with:
-    ```bash
-    kubectl get nodes
-    ```
+- **Kubernetes authentication issues**:
+    - Verify your kubeconfig path is correct in the Pulumi configuration
+    - Test connectivity to your cluster:
+        ```bash
+        kubectl get nodes
+        ```
 
 ## Maintenance
 
 - **Updating ARC**: Update the chart version in `index.ts`
-- **Scaling runners**: Adjust `minRunners` and `maxRunners` in the stack configuration
+- **Adding/removing repositories**: Edit `runners.config.json` and run `pulumi up`
+- **Scaling runners**: Adjust `minRunners` and `maxRunners` in your configuration file
 - **Monitoring**: Use Kubernetes dashboard or tools to monitor runner pods
 
 ## License

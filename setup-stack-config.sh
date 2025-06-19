@@ -11,7 +11,24 @@ echo -e "${GREEN}GitHub Actions Runner Stack Configuration Setup${NC}"
 echo "This script will help you set up the necessary configuration for your Pulumi stack."
 echo ""
 
+# Check if runners.config.json exists
+if [ ! -f "runners.config.json" ]; then
+    echo -e "${YELLOW}Creating runner configuration file...${NC}"
+    if [ -f "runners.config.example.json" ]; then
+        cp runners.config.example.json runners.config.json
+        echo -e "${GREEN}✓ Created runners.config.json from example${NC}"
+        echo -e "${YELLOW}Please edit runners.config.json with your repository information before continuing.${NC}"
+        read -p "Press Enter after you've edited the configuration file..."
+    else
+        echo -e "${RED}runners.config.example.json not found. Please create runners.config.json manually.${NC}"
+        exit 1
+    fi
+else
+    echo -e "${GREEN}✓ runners.config.json already exists${NC}"
+fi
+
 # Stack selection or creation
+echo ""
 echo -e "${BLUE}Available stacks:${NC}"
 pulumi stack ls
 
@@ -47,67 +64,43 @@ CURRENT_STACK=$(pulumi stack)
 echo -e "${BLUE}Current stack: $CURRENT_STACK${NC}"
 echo ""
 
-# Ask for GitHub organization
-read -p "GitHub organization name: " GITHUB_ORG
-pulumi config set github:organization "$GITHUB_ORG"
-echo -e "${GREEN}✓ GitHub organization set to: $GITHUB_ORG${NC}"
-
-# Ask for GitHub token
-read -p "GitHub token (for runner authentication): " GITHUB_TOKEN
+# Ask for GitHub token (required)
+read -p "GitHub token (required for runner authentication): " GITHUB_TOKEN
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo -e "${RED}GitHub token is required. Exiting.${NC}"
+    exit 1
+fi
 pulumi config set --secret github:token "$GITHUB_TOKEN"
 echo -e "${GREEN}✓ GitHub token set (stored securely)${NC}"
 
-# Ask for autoscaler configuration
+# Ask for kubeconfig (optional)
 echo ""
-echo "Autoscaler configuration:"
-read -p "Minimum replicas [1]: " MIN_REPLICAS
-MIN_REPLICAS=${MIN_REPLICAS:-1}
-pulumi config set autoscaler:minReplicas "$MIN_REPLICAS"
+echo -e "${YELLOW}Kubernetes configuration (optional - defaults to ~/.kube/config):${NC}"
+read -p "Path to kubeconfig file [~/.kube/config]: " KUBECONFIG_PATH
 
-read -p "Maximum replicas [3]: " MAX_REPLICAS
-MAX_REPLICAS=${MAX_REPLICAS:-3}
-pulumi config set autoscaler:maxReplicas "$MAX_REPLICAS"
-
-read -p "Scale up threshold [1]: " SCALE_UP_THRESHOLD
-SCALE_UP_THRESHOLD=${SCALE_UP_THRESHOLD:-1}
-pulumi config set autoscaler:scaleUpThreshold "$SCALE_UP_THRESHOLD"
-
-read -p "Scale down threshold [0]: " SCALE_DOWN_THRESHOLD
-SCALE_DOWN_THRESHOLD=${SCALE_DOWN_THRESHOLD:-0}
-pulumi config set autoscaler:scaleDownThreshold "$SCALE_DOWN_THRESHOLD"
-
-read -p "Scale up factor [2]: " SCALE_UP_FACTOR
-SCALE_UP_FACTOR=${SCALE_UP_FACTOR:-2}
-pulumi config set autoscaler:scaleUpFactor "$SCALE_UP_FACTOR"
-
-read -p "Scale down factor [0.5]: " SCALE_DOWN_FACTOR
-SCALE_DOWN_FACTOR=${SCALE_DOWN_FACTOR:-0.5}
-pulumi config set autoscaler:scaleDownFactor "$SCALE_DOWN_FACTOR"
-
-echo -e "${GREEN}✓ Autoscaler configuration set${NC}"
-
-# Ask for kubeconfig
-echo ""
-echo "Kubernetes configuration:"
-read -p "Path to kubeconfig file: " KUBECONFIG_PATH
-
-# Expand tilde to home directory if present
-if [[ "$KUBECONFIG_PATH" == "~"* ]]; then
-    KUBECONFIG_PATH="${KUBECONFIG_PATH/#\~/$HOME}"
-fi
-
-if [ -f "$KUBECONFIG_PATH" ]; then
-    KUBECONFIG_CONTENT=$(cat "$KUBECONFIG_PATH")
-    pulumi config set --secret kubeconfig "$KUBECONFIG_CONTENT"
-    echo -e "${GREEN}✓ Kubeconfig set from: $KUBECONFIG_PATH${NC}"
+if [ -n "$KUBECONFIG_PATH" ]; then
+    # Expand tilde to home directory if present
+    if [[ "$KUBECONFIG_PATH" == "~"* ]]; then
+        KUBECONFIG_PATH="${KUBECONFIG_PATH/#\~/$HOME}"
+    fi
+    
+    if [ -f "$KUBECONFIG_PATH" ]; then
+        pulumi config set kubeconfig "$KUBECONFIG_PATH"
+        echo -e "${GREEN}✓ Kubeconfig path set to: $KUBECONFIG_PATH${NC}"
+    else
+        echo -e "${RED}File not found: $KUBECONFIG_PATH${NC}"
+        echo "Will use default ~/.kube/config"
+    fi
 else
-    echo -e "${RED}File not found: $KUBECONFIG_PATH${NC}"
-    echo "Please enter the kubeconfig content manually."
-    read -p "Kubeconfig content: " KUBECONFIG_CONTENT
-    pulumi config set --secret kubeconfig "$KUBECONFIG_CONTENT"
-    echo -e "${GREEN}✓ Kubeconfig set manually${NC}"
+    echo -e "${GREEN}✓ Will use default kubeconfig location (~/.kube/config)${NC}"
 fi
 
 echo ""
 echo -e "${GREEN}Configuration complete!${NC}"
-echo "You can now run 'pulumi up' to deploy your GitHub Actions runners." 
+echo ""
+echo -e "${BLUE}Next steps:${NC}"
+echo "1. Make sure your runners.config.json contains your repository information"
+echo "2. Ensure your kubeconfig has access to your Kubernetes cluster"
+echo "3. Run 'pulumi up' to deploy your GitHub Actions runners"
+echo ""
+echo -e "${YELLOW}Tip: You can test your configuration with 'pulumi preview' first${NC}" 

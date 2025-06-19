@@ -35,3 +35,12 @@ pnpm-debug.log*
 # Kubernetes
 kubeconfig
 *.kubeconfig
+
+# Runner configuration (contains private repository info)
+runners.config.json
+
+# Pulumi stack configuration (contains sensitive credentials)
+Pulumi.production.yaml
+Pulumi.*.yaml
+!Pulumi.yaml
+!Pulumi.*.example.yaml

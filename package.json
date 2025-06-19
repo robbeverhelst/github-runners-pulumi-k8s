@@ -1,5 +1,5 @@
 {
-    "name": "github-actions-runners",
+    "name": "github-runners-pulumi-k8s",
     "version": "1.0.0",
     "description": "Pulumi project for deploying GitHub Actions self-hosted runners on Kubernetes",
     "main": "index.ts",
@@ -8,7 +8,9 @@
         "deploy": "pulumi up",
         "destroy": "pulumi destroy",
         "preview": "pulumi preview",
-        "lint": "tsc --noEmit"
+        "lint": "tsc --noEmit",
+        "format": "prettier --write .",
+        "ci": "pnpm run format && pnpm run lint && pnpm run build"
     },
     "keywords": [
         "github-actions",
@@ -21,6 +23,7 @@
     "license": "MIT",
     "devDependencies": {
         "@types/node": "^18",
+        "prettier": "^3.5.3",
         "typescript": "^5.0.0"
     },
     "dependencies": {

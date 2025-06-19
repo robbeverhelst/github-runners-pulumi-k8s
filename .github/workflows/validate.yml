@@ -1,61 +1,61 @@
 name: Validate Pulumi Code
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-          run_install: false
-          
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-          
-      - uses: actions/cache@v4
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-            
-      - name: Install dependencies
-        run: pnpm install
-        
-      - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
-        with:
-          pulumi-version: 'latest'
-          
-      - name: Lint TypeScript
-        run: pnpm lint
-        
-      - name: Pulumi Preview
-        uses: pulumi/actions@v5
-        with:
-          command: preview
-          stack-name: dev
-          comment-on-pr: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          # Note: In a real scenario, you would not include actual kubeconfig or GitHub tokens
-          # in the preview. This is just for validation of the TypeScript code. 
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 8
+                  run_install: false
+
+            - name: Get pnpm store directory
+              id: pnpm-cache
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Install Pulumi CLI
+              uses: pulumi/actions@v5
+              with:
+                  pulumi-version: "latest"
+
+            - name: Lint TypeScript
+              run: pnpm lint
+
+            - name: Pulumi Preview
+              uses: pulumi/actions@v5
+              with:
+                  command: preview
+                  stack-name: dev
+                  comment-on-pr: true
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+              env:
+                  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+                  # Note: In a real scenario, you would not include actual kubeconfig or GitHub tokens
+                  # in the preview. This is just for validation of the TypeScript code.

@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.js
+*.d.ts
+*.js.map
+
+# Pulumi
+.pulumi/
+
+# Logs
+*.log
+
+# Config files that might have specific formatting
+pnpm-lock.yaml
+runners.config.json
+Pulumi.*.yaml 

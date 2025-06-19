@@ -1,0 +1,11 @@
+config:
+  # Path to your Kubernetes config file (optional - defaults to ~/.kube/config)
+  # github-runners-pulumi-k8s:kubeconfig: "/path/to/your/kubeconfig"
+  
+  # GitHub token with appropriate permissions (REQUIRED - set as secret using: pulumi config set --secret github:token "your-token")
+  # Required permissions:
+  # - repo scope for private repositories
+  # - public_repo scope for public repositories  
+  # - admin:org scope if configuring organization-level runners
+  github:token:
+    secure: "PLACEHOLDER - SET USING: pulumi config set --secret github:token 'your-github-token'" 

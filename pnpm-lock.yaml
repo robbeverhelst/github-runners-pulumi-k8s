@@ -19,6 +19,9 @@ devDependencies:
   '@types/node':
     specifier: ^18
     version: 18.19.79
+  prettier:
+    specifier: ^3.5.3
+    version: 3.5.3
   typescript:
     specifier: ^5.0.0
     version: 5.8.2
@@ -1583,6 +1586,12 @@ packages:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
     dev: false
+
+  /prettier@3.5.3:
+    resolution: {integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==}
+    engines: {node: '>=14'}
+    hasBin: true
+    dev: true
 
   /proc-log@4.2.0:
     resolution: {integrity: sha512-g8+OnU/L2v+wyiVK+D5fA34J7EH8jZ8DDlvwhRCMxmMj7UCBvxiO1mGeN+36JXIKF4zevU4kRBd8lVgG9vLelA==}
