@@ -25,29 +25,32 @@ Deploy self-hosted GitHub Actions runners on Kubernetes using [Pulumi](https://w
 ## Quick Start
 
 1. **Clone and install dependencies:**
-   ```bash
-   git clone https://github.com/RobbeVerhelst/github-runners-pulumi-k8s.git
-   cd github-runners-pulumi-k8s
-   pnpm install
-   ```
+
+    ```bash
+    git clone https://github.com/RobbeVerhelst/github-runners-pulumi-k8s.git
+    cd github-runners-pulumi-k8s
+    pnpm install
+    ```
 
 2. **Configure runners:**
-   ```bash
-   cp runners.config.example.json runners.config.json
-   # Edit runners.config.json with your repositories
-   ```
+
+    ```bash
+    cp runners.config.example.json runners.config.json
+    # Edit runners.config.json with your repositories
+    ```
 
 3. **Setup Pulumi stack:**
-   ```bash
-   pulumi stack select production  # or create new stack
-   pulumi config set --secret github:token "your-github-token"
-   # Optional: pulumi config set kubeconfig "path/to/kubeconfig"
-   ```
+
+    ```bash
+    pulumi stack select production  # or create new stack
+    pulumi config set --secret github:token "your-github-token"
+    # Optional: pulumi config set kubeconfig "path/to/kubeconfig"
+    ```
 
 4. **Deploy:**
-   ```bash
-   pulumi up
-   ```
+    ```bash
+    pulumi up
+    ```
 
 ## Configuration
 
@@ -65,6 +68,7 @@ Edit `runners.config.json` to define your runners:
 ```
 
 **Fields:**
+
 - `helmReleaseName`: Unique name for the Helm release
 - `repository`: GitHub repository in `owner/repo` format
 - `minRunners`: Minimum runners to keep running (default: 1)
@@ -74,17 +78,18 @@ Edit `runners.config.json` to define your runners:
 
 ```yaml
 jobs:
-  build:
-    runs-on: arc-runner-set-my-repo  # Use your helmReleaseName
-    steps:
-      # Your workflow steps
+    build:
+        runs-on: arc-runner-set-my-repo # Use your helmReleaseName
+        steps:
+            # Your workflow steps
 ```
 
 ## GitHub Token Permissions
 
 Your token needs:
+
 - `repo` scope for private repositories
-- `public_repo` scope for public repositories  
+- `public_repo` scope for public repositories
 - `admin:org` scope for organization-level runners
 
 ## File Structure
@@ -115,13 +120,13 @@ kubectl get nodes
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Configuration file not found | Create `runners.config.json` from example |
-| Runners not registering | Check pod logs for auth issues |
-| Workflows not using runners | Verify correct `runs-on` name in workflow |
-| Runner pods crashing | Check resource limits and node capacity |
-| Kubernetes auth issues | Verify kubeconfig path and test with `kubectl get nodes` |
+| Issue                        | Solution                                                 |
+| ---------------------------- | -------------------------------------------------------- |
+| Configuration file not found | Create `runners.config.json` from example                |
+| Runners not registering      | Check pod logs for auth issues                           |
+| Workflows not using runners  | Verify correct `runs-on` name in workflow                |
+| Runner pods crashing         | Check resource limits and node capacity                  |
+| Kubernetes auth issues       | Verify kubeconfig path and test with `kubectl get nodes` |
 
 ## Maintenance
 

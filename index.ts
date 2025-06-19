@@ -16,7 +16,7 @@ const CHART_VERSIONS = {
     // TODO: Upgrade to consistent ARC v0.7.0 architecture in future release
     // Currently using mixed versions to maintain compatibility with existing infrastructure
     ARC_CONTROLLER_OLD: "0.23.7", // Legacy controller - to be replaced
-    ARC_CONTROLLER_NEW: "0.7.0",  // New controller architecture
+    ARC_CONTROLLER_NEW: "0.7.0", // New controller architecture
     ARC_RUNNER_SCALE_SET: "0.7.0",
 } as const;
 
@@ -179,11 +179,13 @@ const controllerClusterRoleBinding = new ClusterRoleBinding(
             kind: "ClusterRole",
             name: "cluster-admin",
         },
-        subjects: [{
-            kind: "ServiceAccount",
-            name: "arc-actions-runner-controller", // TODO: Change to "arc-controller-gha-rs-controller"
-            namespace: arcSystemsNs.metadata.name,
-        }],
+        subjects: [
+            {
+                kind: "ServiceAccount",
+                name: "arc-actions-runner-controller", // TODO: Change to "arc-controller-gha-rs-controller"
+                namespace: arcSystemsNs.metadata.name,
+            },
+        ],
     },
     { provider: k8sProvider, dependsOn: [arcControllerChart] }
 );
@@ -244,11 +246,13 @@ const runnerControllerRoleBinding = new RoleBinding(
             kind: "Role",
             name: runnerControllerRole.metadata.name,
         },
-        subjects: [{
-            kind: "ServiceAccount",
-            name: "arc-runner-controller-gha-rs-controller",
-            namespace: arcRunnersNs.metadata.name, // Keep in runners namespace for now
-        }],
+        subjects: [
+            {
+                kind: "ServiceAccount",
+                name: "arc-runner-controller-gha-rs-controller",
+                namespace: arcRunnersNs.metadata.name, // Keep in runners namespace for now
+            },
+        ],
     },
     { provider: k8sProvider, dependsOn: [runnerControllerRole] }
 );
