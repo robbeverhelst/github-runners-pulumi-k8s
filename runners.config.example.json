@@ -1,0 +1,14 @@
+[
+    {
+        "helmReleaseName": "arc-runner-set-example-repo",
+        "repository": "username/repository-name",
+        "minRunners": 1,
+        "maxRunners": 3
+    },
+    {
+        "helmReleaseName": "arc-runner-set-another-repo",
+        "repository": "username/another-repository",
+        "minRunners": 2,
+        "maxRunners": 5
+    }
+]
