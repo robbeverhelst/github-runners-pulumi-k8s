@@ -28,7 +28,7 @@
     },
     "dependencies": {
         "@pulumi/github": "^6.7.0",
-        "@pulumi/kubernetes": "^4.21.1",
+        "@pulumi/kubernetes": "^4.23.0",
         "@pulumi/pulumi": "^3.113.0"
     },
     "engines": {
