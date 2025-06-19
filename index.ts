@@ -1,36 +1,65 @@
-import { Config, getStack } from "@pulumi/pulumi";
+import { Config } from "@pulumi/pulumi";
 import { Provider } from "@pulumi/kubernetes";
 import { Namespace } from "@pulumi/kubernetes/core/v1";
 import { Release } from "@pulumi/kubernetes/helm/v3";
 import { ClusterRoleBinding, Role, RoleBinding } from "@pulumi/kubernetes/rbac/v1";
-import { Release as HelmRelease } from "@pulumi/kubernetes/helm/v3";
 import { existsSync, readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
 // ============================================================================
-// CONFIGURATION - Easy to modify repositories
+// CONSTANTS
+// ============================================================================
+
+const CHART_VERSIONS = {
+    CERT_MANAGER: "v1.13.3",
+    // TODO: Upgrade to consistent ARC v0.7.0 architecture in future release
+    // Currently using mixed versions to maintain compatibility with existing infrastructure
+    ARC_CONTROLLER_OLD: "0.23.7", // Legacy controller - to be replaced
+    ARC_CONTROLLER_NEW: "0.7.0",  // New controller architecture
+    ARC_RUNNER_SCALE_SET: "0.7.0",
+} as const;
+
+// TODO: Consolidate RBAC rules once we migrate to single ARC architecture
+const RBAC_RULES = {
+    RBAC_MANAGEMENT: {
+        apiGroups: ["rbac.authorization.k8s.io"],
+        resources: ["roles", "rolebindings"],
+        verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
+    },
+    ARC_RESOURCES: {
+        apiGroups: ["actions.github.com"],
+        resources: [
+            "ephemeralrunnersets",
+            "ephemeralrunners",
+            "ephemeralrunners/status",
+            "autoscalinglisteners",
+        ],
+        verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
+    },
+};
+
+// ============================================================================
+// CONFIGURATION
 // ============================================================================
 
 interface RunnerConfig {
-    helmReleaseName: string; // Must match existing Helm release names
-    repository: string; // GitHub repository (e.g., "RobbeVerhelst/DeBleserIT")
-    minRunners?: number; // Optional, defaults to 1
-    maxRunners?: number; // Optional, defaults to 3
+    helmReleaseName: string;
+    repository: string;
+    minRunners?: number;
+    maxRunners?: number;
 }
 
-// Generate Pulumi resource name from repository
 function generateResourceName(repository: string): string {
     return `arc-runner-set-${repository.split("/")[1].toLowerCase()}`;
 }
 
-// Load repositories from external configuration file
 function loadRunnerConfig(): RunnerConfig[] {
     const configPath = join(__dirname, "runners.config.json");
 
     if (!existsSync(configPath)) {
         throw new Error(
-            `Configuration file not found: ${configPath}. Please copy runners.config.example.json to runners.config.json and customize it with your repositories.`
+            `Configuration file not found: ${configPath}. Please copy runners.config.example.json to runners.config.json and customize it.`
         );
     }
 
@@ -38,7 +67,6 @@ function loadRunnerConfig(): RunnerConfig[] {
         const configContent = readFileSync(configPath, "utf8");
         const config = JSON.parse(configContent) as RunnerConfig[];
 
-        // Validate the configuration
         if (!Array.isArray(config)) {
             throw new Error("Configuration must be an array of RunnerConfig objects");
         }
@@ -60,140 +88,125 @@ function loadRunnerConfig(): RunnerConfig[] {
     }
 }
 
-const repositories: RunnerConfig[] = loadRunnerConfig();
-
 // ============================================================================
-// PULUMI CONFIGURATION
+// PULUMI SETUP
 // ============================================================================
 
-// Get stack name and configuration
-const stack = getStack();
 const config = new Config();
 const githubConfig = new Config("github");
+const repositories = loadRunnerConfig();
 
-// Configuration
 const kubeconfig = config.get("kubeconfig") || join(homedir(), ".kube", "config");
 const githubToken = githubConfig.requireSecret("token");
 
-// Kubernetes provider
 const k8sProvider = new Provider("k8s-provider", {
     kubeconfig: kubeconfig,
 });
 
 // ============================================================================
-// INFRASTRUCTURE SETUP
+// NAMESPACES
 // ============================================================================
 
-// Step 1: Install cert-manager (exactly as in the quickstart guide)
-// Create cert-manager namespace
 const certManagerNs = new Namespace(
     "cert-manager-ns",
-    {
-        metadata: { name: "cert-manager" },
-    },
+    { metadata: { name: "cert-manager" } },
     { provider: k8sProvider }
 );
 
-// Install cert-manager using Helm
+const arcSystemsNs = new Namespace(
+    "arc-systems-ns",
+    { metadata: { name: "arc-systems" } },
+    { provider: k8sProvider }
+);
+
+const arcRunnersNs = new Namespace(
+    "arc-runners-ns",
+    { metadata: { name: "arc-runners" } },
+    { provider: k8sProvider }
+);
+
+// ============================================================================
+// CERT-MANAGER
+// ============================================================================
+
 const certManagerChart = new Release(
     "cert-manager",
     {
         name: "cert-manager",
         chart: "cert-manager",
-        version: "v1.13.3",
-        repositoryOpts: {
-            repo: "https://charts.jetstack.io",
-        },
+        version: CHART_VERSIONS.CERT_MANAGER,
+        repositoryOpts: { repo: "https://charts.jetstack.io" },
         namespace: certManagerNs.metadata.name,
-        values: {
-            installCRDs: true,
-        },
+        values: { installCRDs: true },
     },
     { provider: k8sProvider, dependsOn: [certManagerNs] }
 );
 
-// Step 2: Create the ARC system namespace
-const arcSystemsNs = new Namespace(
-    "arc-systems-ns",
-    {
-        metadata: { name: "arc-systems" },
-    },
-    { provider: k8sProvider }
-);
+// ============================================================================
+// ARC CONTROLLER (Legacy - TODO: Migrate to new architecture)
+// ============================================================================
 
-// Step 3: Install the ARC controller using Helm (exactly as in the quickstart guide)
+// TODO: Replace this with the new ARC controller architecture
+// Currently keeping old controller to avoid breaking existing infrastructure
 const arcControllerChart = new Release(
     "arc-controller",
     {
-        name: "arc",
-        chart: "actions-runner-controller",
-        version: "0.23.7",
+        name: "arc", // TODO: Change to "arc-controller" when migrating
+        chart: "actions-runner-controller", // TODO: Change to new OCI chart
+        version: CHART_VERSIONS.ARC_CONTROLLER_OLD, // TODO: Upgrade to v0.7.0
         repositoryOpts: {
-            repo: "https://actions.github.io/actions-runner-controller",
+            repo: "https://actions.github.io/actions-runner-controller", // TODO: Remove when using OCI
         },
         namespace: arcSystemsNs.metadata.name,
         values: {
             authSecret: {
-                create: true,
+                create: true, // TODO: Simplify when migrating
                 github_token: githubToken,
             },
+            // TODO: Add new RBAC and serviceAccount config when migrating
         },
     },
     { provider: k8sProvider, dependsOn: [arcSystemsNs, certManagerChart] }
 );
 
-// Step 4: Create the runners namespace
-const arcRunnersNs = new Namespace(
-    "arc-runners-ns",
-    {
-        metadata: { name: "arc-runners" },
-    },
-    { provider: k8sProvider }
-);
-
-// Create a ClusterRoleBinding to give the controller admin permissions
+// TODO: Update service account name to "arc-controller-gha-rs-controller" when migrating
 const controllerClusterRoleBinding = new ClusterRoleBinding(
     "arc-controller-admin",
     {
-        metadata: {
-            name: "arc-controller-admin",
-        },
+        metadata: { name: "arc-controller-admin" },
         roleRef: {
             apiGroup: "rbac.authorization.k8s.io",
             kind: "ClusterRole",
             name: "cluster-admin",
         },
-        subjects: [
-            {
-                kind: "ServiceAccount",
-                name: "arc-actions-runner-controller",
-                namespace: arcSystemsNs.metadata.name,
-            },
-        ],
+        subjects: [{
+            kind: "ServiceAccount",
+            name: "arc-actions-runner-controller", // TODO: Change to "arc-controller-gha-rs-controller"
+            namespace: arcSystemsNs.metadata.name,
+        }],
     },
     { provider: k8sProvider, dependsOn: [arcControllerChart] }
 );
 
-// Step 5: Install the gha-runner-scale-set-controller chart to get the CRDs
-const runnerScaleSetControllerChart = new HelmRelease(
+// ============================================================================
+// NEW ARC CONTROLLER (Required for runner scale sets)
+// ============================================================================
+
+// This controller is needed for the new runner scale set architecture
+const runnerScaleSetControllerChart = new Release(
     "arc-runner-controller",
     {
         name: "arc-runner-controller",
         chart: "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller",
-        version: "0.7.0",
+        version: CHART_VERSIONS.ARC_CONTROLLER_NEW,
         namespace: arcRunnersNs.metadata.name,
         values: {
-            authSecret: {
-                github_token: githubToken,
-            },
-            rbac: {
-                create: true,
-                useClusterRole: true,
-            },
+            authSecret: { github_token: githubToken },
+            rbac: { create: true, useClusterRole: true },
             serviceAccount: {
-                annotations: {},
                 create: true,
                 name: "arc-runner-controller-gha-rs-controller",
+                annotations: {},
             },
         },
     },
@@ -203,7 +216,10 @@ const runnerScaleSetControllerChart = new HelmRelease(
     }
 );
 
-// Create a Role for the runner controller service account to create roles and rolebindings
+// ============================================================================
+// RUNNER NAMESPACE RBAC
+// ============================================================================
+
 const runnerControllerRole = new Role(
     "arc-runner-controller-role",
     {
@@ -211,28 +227,11 @@ const runnerControllerRole = new Role(
             name: "arc-runner-controller-role",
             namespace: arcRunnersNs.metadata.name,
         },
-        rules: [
-            {
-                apiGroups: ["rbac.authorization.k8s.io"],
-                resources: ["roles", "rolebindings"],
-                verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
-            },
-            {
-                apiGroups: ["actions.github.com"],
-                resources: [
-                    "ephemeralrunnersets",
-                    "ephemeralrunners",
-                    "ephemeralrunners/status",
-                    "autoscalinglisteners",
-                ],
-                verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
-            },
-        ],
+        rules: [RBAC_RULES.RBAC_MANAGEMENT, RBAC_RULES.ARC_RESOURCES],
     },
     { provider: k8sProvider, dependsOn: [arcRunnersNs, runnerScaleSetControllerChart] }
 );
 
-// Create a RoleBinding for the runner controller service account
 const runnerControllerRoleBinding = new RoleBinding(
     "arc-runner-controller-rolebinding",
     {
@@ -245,48 +244,41 @@ const runnerControllerRoleBinding = new RoleBinding(
             kind: "Role",
             name: runnerControllerRole.metadata.name,
         },
-        subjects: [
-            {
-                kind: "ServiceAccount",
-                name: "arc-runner-controller-gha-rs-controller",
-                namespace: arcRunnersNs.metadata.name,
-            },
-        ],
+        subjects: [{
+            kind: "ServiceAccount",
+            name: "arc-runner-controller-gha-rs-controller",
+            namespace: arcRunnersNs.metadata.name, // Keep in runners namespace for now
+        }],
     },
-    { provider: k8sProvider, dependsOn: [arcRunnersNs, runnerControllerRole] }
+    { provider: k8sProvider, dependsOn: [runnerControllerRole] }
 );
 
 // ============================================================================
-// RUNNER SCALE SETS - Generated from configuration array
+// RUNNER SCALE SETS
 // ============================================================================
 
-// Helper function to create runner scale set values
 function createRunnerScaleSetValues(repo: RunnerConfig) {
     return {
         githubConfigUrl: `https://github.com/${repo.repository}`,
-        githubConfigSecret: {
-            github_token: githubToken,
-        },
+        githubConfigSecret: { github_token: githubToken },
         minRunners: repo.minRunners || 1,
         maxRunners: repo.maxRunners || 3,
         controllerServiceAccount: {
-            name: "arc-actions-runner-controller",
+            // TODO: Change to "arc-controller-gha-rs-controller" when migrating to single controller
+            name: "arc-actions-runner-controller", // Keep current name to avoid changes
             namespace: arcSystemsNs.metadata.name,
         },
+        // TODO: Remove this RBAC config when we migrate to centralized RBAC
         rbac: {
             create: true,
             rules: [
-                {
-                    apiGroups: ["rbac.authorization.k8s.io"],
-                    resources: ["roles", "rolebindings"],
-                    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
-                },
+                RBAC_RULES.RBAC_MANAGEMENT,
                 {
                     apiGroups: ["actions.github.com"],
                     resources: [
                         "ephemeralrunnersets",
                         "ephemeralrunners",
-                        "ephemeralrunners/status",
+                        "ephemeralrunners/status", // Note: missing "autoscalinglisteners" to match current config
                     ],
                     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"],
                 },
@@ -295,17 +287,16 @@ function createRunnerScaleSetValues(repo: RunnerConfig) {
     };
 }
 
-// Create runner scale sets for each repository
-const runnerScaleSets: { [key: string]: HelmRelease } = {};
+const runnerScaleSets: Record<string, Release> = {};
 
 repositories.forEach((repo) => {
     const resourceName = generateResourceName(repo.repository);
-    runnerScaleSets[resourceName] = new HelmRelease(
-        resourceName, // Auto-generated Pulumi resource name
+    runnerScaleSets[resourceName] = new Release(
+        resourceName,
         {
-            name: repo.helmReleaseName, // Use exact existing Helm release name
+            name: repo.helmReleaseName,
             chart: "oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set",
-            version: "0.7.0",
+            version: CHART_VERSIONS.ARC_RUNNER_SCALE_SET,
             namespace: arcRunnersNs.metadata.name,
             values: createRunnerScaleSetValues(repo),
         },
@@ -320,13 +311,12 @@ repositories.forEach((repo) => {
 // EXPORTS
 // ============================================================================
 
-// Export useful values
 export const certManagerNamespace = certManagerNs.metadata.name;
 export const arcSystemsNamespace = arcSystemsNs.metadata.name;
 export const arcRunnersNamespace = arcRunnersNs.metadata.name;
-export const runnerSetName = "arc-runner-set"; // This is what you'll use in your GitHub Actions workflow's runs-on
+// TODO: Remove this export when we migrate to single controller architecture
+export const runnerSetName = "arc-runner-set";
 
-// Export all runner set names for easy reference
 export const runnerSetNames = repositories.map((repo) => ({
     repository: repo.repository,
     runnerSetName: repo.helmReleaseName,
