@@ -24,7 +24,7 @@
     "devDependencies": {
         "@types/node": "^18",
         "prettier": "^3.5.3",
-        "typescript": "^5.0.0"
+        "typescript": "^5.8.3"
     },
     "dependencies": {
         "@pulumi/github": "^6.7.0",
