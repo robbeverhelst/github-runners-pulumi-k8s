@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@pulumi/github':
-    specifier: ^6.7.0
-    version: 6.7.0(typescript@5.8.2)
+    specifier: ^6.7.3
+    version: 6.7.3(typescript@5.8.2)
   '@pulumi/kubernetes':
     specifier: ^4.21.1
     version: 4.21.1(typescript@5.8.2)
@@ -443,8 +443,8 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@pulumi/github@6.7.0(typescript@5.8.2):
-    resolution: {integrity: sha512-14LgAm6Q1CtIRoHE7E+17pr1a26ugR7IDzWoTgq1bvm8mmqUCIJs/8IbcQR+VwxY304fhN/n6YRqk/6MY9lsJw==}
+  /@pulumi/github@6.7.3(typescript@5.8.2):
+    resolution: {integrity: sha512-uqXvZba3FIc5ZSZFk6G5fMtNvtjQAOP+pg8hXFx8VAd01eCXqquY6xgB5HlR7xhHclGanAjtyaWOyvTrHDP3kQ==}
     dependencies:
       '@pulumi/pulumi': 3.153.1(typescript@5.8.2)
     transitivePeerDependencies:
