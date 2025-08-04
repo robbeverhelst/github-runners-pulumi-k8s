@@ -7,13 +7,13 @@ settings:
 dependencies:
   '@pulumi/github':
     specifier: ^6.7.0
-    version: 6.7.0(typescript@5.8.2)
+    version: 6.7.0(typescript@5.9.2)
   '@pulumi/kubernetes':
     specifier: ^4.21.1
-    version: 4.21.1(typescript@5.8.2)
+    version: 4.21.1(typescript@5.9.2)
   '@pulumi/pulumi':
     specifier: ^3.113.0
-    version: 3.153.1(typescript@5.8.2)
+    version: 3.153.1(typescript@5.9.2)
 
 devDependencies:
   '@types/node':
@@ -23,8 +23,8 @@ devDependencies:
     specifier: ^3.5.3
     version: 3.5.3
   typescript:
-    specifier: ^5.0.0
-    version: 5.8.2
+    specifier: ^5.9.2
+    version: 5.9.2
 
 packages:
 
@@ -443,10 +443,10 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@pulumi/github@6.7.0(typescript@5.8.2):
+  /@pulumi/github@6.7.0(typescript@5.9.2):
     resolution: {integrity: sha512-14LgAm6Q1CtIRoHE7E+17pr1a26ugR7IDzWoTgq1bvm8mmqUCIJs/8IbcQR+VwxY304fhN/n6YRqk/6MY9lsJw==}
     dependencies:
-      '@pulumi/pulumi': 3.153.1(typescript@5.8.2)
+      '@pulumi/pulumi': 3.153.1(typescript@5.9.2)
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -454,11 +454,11 @@ packages:
       - typescript
     dev: false
 
-  /@pulumi/kubernetes@4.21.1(typescript@5.8.2):
+  /@pulumi/kubernetes@4.21.1(typescript@5.9.2):
     resolution: {integrity: sha512-+mhO7xM4+Sy7Bqu9DKsmJEpqn34qb3ZQxPqGgrphYqiYnUiS8SWL6pDvecZWYFWBlr85KcGdaCoHRLg2paa8Ng==}
     requiresBuild: true
     dependencies:
-      '@pulumi/pulumi': 3.153.1(typescript@5.8.2)
+      '@pulumi/pulumi': 3.153.1(typescript@5.9.2)
       glob: 10.4.5
       shell-quote: 1.8.2
     transitivePeerDependencies:
@@ -468,7 +468,7 @@ packages:
       - typescript
     dev: false
 
-  /@pulumi/pulumi@3.153.1(typescript@5.8.2):
+  /@pulumi/pulumi@3.153.1(typescript@5.9.2):
     resolution: {integrity: sha512-NeYLOSOVqsUEhPH3eCRGJNuahtWMHEom2E3NR/LoTccH5SGzlgHeL153lQSjmm2reik/l0B+ZCjPB3rN4HAbqw==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -509,7 +509,7 @@ packages:
       semver: 7.7.1
       source-map-support: 0.5.21
       tmp: 0.2.3
-      typescript: 5.8.2
+      typescript: 5.9.2
       upath: 1.2.0
     transitivePeerDependencies:
       - bluebird
@@ -1922,8 +1922,8 @@ packages:
       - supports-color
     dev: false
 
-  /typescript@5.8.2:
-    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
+  /typescript@5.9.2:
+    resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
     engines: {node: '>=14.17'}
     hasBin: true
 
