@@ -29,7 +29,7 @@
     "dependencies": {
         "@pulumi/github": "^6.7.0",
         "@pulumi/kubernetes": "^4.21.1",
-        "@pulumi/pulumi": "^3.113.0"
+        "@pulumi/pulumi": "^3.187.0"
     },
     "engines": {
         "node": ">=16.0.0"
